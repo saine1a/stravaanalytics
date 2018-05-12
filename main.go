@@ -3,12 +3,15 @@ package main
 import (
 	"fmt"
 
+	"github.com/saine1a/stravaanalytics/db"
 	"github.com/saine1a/stravaanalytics/stravaaccess"
 )
 
 func main() {
 
 	stravaObj := stravaaccess.Init()
+
+	db.Init()
 
 	clubs := stravaObj.GetClubs()
 
@@ -27,4 +30,5 @@ func main() {
 		}
 	}
 
+	return
 }
