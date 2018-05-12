@@ -11,7 +11,7 @@ func main() {
 
 	stravaObj := stravaaccess.Init()
 
-	db.Init()
+	dbObj := db.Init()
 
 	clubs := stravaObj.GetClubs()
 
@@ -28,6 +28,8 @@ func main() {
 			act := (*activities)[a]
 			fmt.Printf("\t%s by %s %s distance %f\n", act.Name, act.Athlete.FirstName, act.Athlete.LastName, act.Distance)
 		}
+
+		dbObj.StoreActivities((*clubs)[c], activities)
 	}
 
 	return
