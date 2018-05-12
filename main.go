@@ -16,7 +16,15 @@ func main() {
 
 	fmt.Printf("%d clubs found\n", len(*clubs))
 	for c := range *clubs {
-		fmt.Printf("Club : %s\n", (*clubs)[c].Name)
+
+		activities := stravaObj.GetActivities((*clubs)[c].ID)
+
+		fmt.Printf("Club : %s Activities : %d\n", (*clubs)[c].Name, len(*activities))
+
+		for a := range *activities {
+			act := (*activities)[a]
+			fmt.Printf("\t%s by %s %s distance %f\n", act.Name, act.Athlete.FirstName, act.Athlete.LastName, act.Distance)
+		}
 	}
 
 }
