@@ -65,11 +65,10 @@ func (obj *StravaAccess) GetClubs() *([]Club) {
 	return &clubs
 }
 
-// GetActivities : Get activities for a club
-func (obj *StravaAccess) GetActivities(club int64) *([]SummaryActivity) {
+func (obj *StravaAccess) getActivityPage(club int64, page int) *([]SummaryActivity) {
 
 	// Prepare get request
-	url := fmt.Sprintf("https://www.strava.com/api/v3/clubs/%d/activities&per_page=%d", club, 999)
+	url := fmt.Sprintf("https://www.strava.com/api/v3/clubs/%d/activities?per_page=%d&page=%d", club, 100, page)
 
 	fmt.Println(url)
 
@@ -105,6 +104,28 @@ func (obj *StravaAccess) GetActivities(club int64) *([]SummaryActivity) {
 
 	for a := range activities {
 		activities[a].Distance = (activities[a].Distance / 1000) / 1.60934
+	}
+
+	return &activities
+}
+
+// GetActivities : Get activities for a club
+func (obj *StravaAccess) GetActivities(club int64) *([]SummaryActivity) {
+
+	activities := make([]SummaryActivity, 0)
+
+	emptyPage := false
+
+	for page := 1; emptyPage == false; page++ {
+
+		activityPage := obj.getActivityPage(club, page)
+
+		if len(*activityPage) == 0 {
+			emptyPage = true
+		} else {
+			activities = append(activities, *activityPage...)
+		}
+
 	}
 
 	return &activities
