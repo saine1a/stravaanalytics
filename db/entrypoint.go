@@ -62,38 +62,7 @@ func (obj *DBaccess) execSQL(sql string) sql.Result {
 // StoreActivities - store a set of activities in the database
 func (obj *DBaccess) StoreActivities(club stravaaccess.Club, activities *([]stravaaccess.SummaryActivity)) {
 
-	// First drop the table, in case it already exists
+	// Create schema
 
-	tableName := fmt.Sprintf("Activity_%s_%d", club.Name, club.ID)
-
-	dropStmt := fmt.Sprintf("DROP TABLE IF EXISTS %s", sqlName(tableName))
-
-	obj.execSQL(dropStmt)
-
-	// Now create the table
-
-	createTableStmt := fmt.Sprintf("CREATE TABLE `%s` (`activityName` VARCHAR(256), `rider` VARCHAR(256), `distance` INT(10))", sqlName(tableName))
-
-	fmt.Println(createTableStmt)
-
-	obj.execSQL(createTableStmt)
-
-	// New insert the values
-
-	insertStmt, err := obj.db.Prepare(fmt.Sprintf("INSERT %s SET activityName=?,rider=?,distance=?", sqlName(tableName)))
-
-	if err != nil {
-		panic(err.Error())
-	}
-
-	for a := range *activities {
-
-		activity := (*activities)[a]
-
-		insertStmt.Exec(activity.Name, fmt.Sprintf("%s %s", activity.Athlete.FirstName, activity.Athlete.LastName), activity.Distance)
-
-		if err != nil {
-			panic(err.Error())
-		}
-	}
+	obj.createSchema(club, activities)
 }

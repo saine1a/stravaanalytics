@@ -18,6 +18,7 @@ func main() {
 	// Print out
 
 	fmt.Printf("%d clubs found\n", len(*clubs))
+
 	for c := range *clubs {
 
 		activities := stravaObj.GetActivities((*clubs)[c].ID)
