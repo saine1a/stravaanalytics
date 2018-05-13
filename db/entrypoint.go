@@ -48,6 +48,17 @@ func sqlName(name string) string {
 	return newName
 }
 
+func (obj *DBaccess) execSQL(sql string) sql.Result {
+	result, err := obj.db.Exec(sql)
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	return result
+
+}
+
 // StoreActivities - store a set of activities in the database
 func (obj *DBaccess) StoreActivities(club stravaaccess.Club, activities *([]stravaaccess.SummaryActivity)) {
 
@@ -57,11 +68,7 @@ func (obj *DBaccess) StoreActivities(club stravaaccess.Club, activities *([]stra
 
 	dropStmt := fmt.Sprintf("DROP TABLE IF EXISTS %s", sqlName(tableName))
 
-	_, err := obj.db.Exec(dropStmt)
-
-	if err != nil {
-		panic(err.Error())
-	}
+	obj.execSQL(dropStmt)
 
 	// Now create the table
 
@@ -69,11 +76,7 @@ func (obj *DBaccess) StoreActivities(club stravaaccess.Club, activities *([]stra
 
 	fmt.Println(createTableStmt)
 
-	_, err = obj.db.Exec(createTableStmt)
-
-	if err != nil {
-		panic(err.Error())
-	}
+	obj.execSQL(createTableStmt)
 
 	// New insert the values
 
