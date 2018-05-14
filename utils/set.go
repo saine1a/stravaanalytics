@@ -1,17 +1,17 @@
-package set
+package utils
 
 // Set : object
 type Set struct {
 	slice []interface{}
 }
 
-// Create : construct
-func Create(protoypeSlice []interface{}) *Set {
-	return &Set{slice: protoypeSlice}
+// CreateSet : construct
+func CreateSet() *Set {
+	return &Set{slice: make([]interface{}, 0, 100)}
 }
 
 // AddSet : add another set
-func (set *Set) AddSet(secondSet Set) {
+func (set *Set) AddSet(secondSet *Set) {
 
 	for i := range secondSet.slice {
 		set.Add(secondSet.slice[i])
@@ -36,4 +36,9 @@ func (set *Set) Contains(item interface{}) bool {
 	}
 
 	return false
+}
+
+// Slice : returns a slice of members
+func (set *Set) Slice() []interface{} {
+	return set.slice
 }

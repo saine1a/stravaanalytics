@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/saine1a/stravaanalytics/set"
 	"github.com/saine1a/stravaanalytics/stravaaccess"
+	"github.com/saine1a/stravaanalytics/utils"
 )
 
 type field struct {
@@ -13,79 +13,91 @@ type field struct {
 	name  string
 }
 
-func recursiveExplore(typ reflect.Type) (set.Set, []field) {
+func recursiveExplore(typ reflect.Type) *utils.HierarchicalSet {
 
-	fields := make([]field, 0, 100)
-	tables := set.Set({make[]string, 0, 100})
+	schema := utils.CreateHierarchicalSet()
 
 	for i := 0; i < typ.NumField(); i++ {
 		if typ.Field(i).Type.Kind() == reflect.Struct {
-			t, f := recursiveExplore(typ.Field(i).Type)
+			subSet := recursiveExplore(typ.Field(i).Type)
 
-			tables.AddSet(t)
-			fields = append(fields, f...)
+			schema.AddHierarchicalSet(subSet)
 		} else {
-			tables.Add("dimension")
-			fields = append(fields, field{table: typ.Field(i).Tag.Get("dimension"), name: typ.Field(i).Name})
+			schema.Add(typ.Field(i).Tag.Get("dimension"), typ.Field(i).Name)
 		}
 	}
 
-	return tables, fields
+	return schema
 }
 
-func (obj *DBaccess) exploreSchema(activities *([]stravaaccess.SummaryActivity)) (set.Set, []field) {
+func (obj *DBaccess) exploreSchema(activities *([]stravaaccess.SummaryActivity)) *utils.HierarchicalSet {
 
 	typ := reflect.TypeOf((*activities)[0])
 
 	return recursiveExplore(typ)
 }
 
-func (obj *DBaccess) createSchema(club stravaaccess.Club, activities *([]stravaaccess.SummaryActivity)) {
-
-	// Explore the schema
-
-	tables, fields := obj.exploreSchema(activities)
-
-	for t := range tables {
-		fmt.Printf("Table %s\n", tables[t])
-	}
-
-	for f := range fields {
-		fmt.Printf("Field %s\n", fields[f])
-	}
-
+func (obj *DBaccess) createTable(club stravaaccess.Club, table string, fieldSet *utils.Set) {
 	// First drop the table, in case it already exists
 
-	tableName := fmt.Sprintf("Activity_%s_%d", club.Name, club.ID)
+	tableName := fmt.Sprintf("Activity_%s_%d_%s", club.Name, club.ID, table)
 
 	dropStmt := fmt.Sprintf("DROP TABLE IF EXISTS %s", sqlName(tableName))
 
 	obj.execSQL(dropStmt)
 
+	// Determine the fields
+
+	fields := fieldSet.Slice()
+
+	fieldExpr := ""
+
+	for f := range fields {
+		if f > 0 {
+			fieldExpr = fieldExpr + ","
+		}
+
+		fieldExpr = fieldExpr + fmt.Sprintf("`%s` VARCHAR(256)", fields[f].(string))
+	}
+
 	// Now create the table
 
-	createTableStmt := fmt.Sprintf("CREATE TABLE `%s` (`activityName` VARCHAR(256), `rider` VARCHAR(256), `distance` INT(10))", sqlName(tableName))
+	createTableStmt := fmt.Sprintf("CREATE TABLE `%s` (%s)", sqlName(tableName), fieldExpr)
 
 	fmt.Println(createTableStmt)
 
 	obj.execSQL(createTableStmt)
+}
 
-	// New insert the values
+func (obj *DBaccess) createSchema(club stravaaccess.Club, activities *([]stravaaccess.SummaryActivity)) {
 
-	insertStmt, err := obj.db.Prepare(fmt.Sprintf("INSERT %s SET activityName=?,rider=?,distance=?", sqlName(tableName)))
+	// Explore the schema
 
-	if err != nil {
-		panic(err.Error())
+	schema := obj.exploreSchema(activities)
+
+	tableSlice := schema.GetKeys()
+	for t := range tableSlice {
+		obj.createTable(club, tableSlice[t], schema.GetSecondLevelSet(tableSlice[t]))
 	}
 
-	for a := range *activities {
+	/*
+		// New insert the values
 
-		activity := (*activities)[a]
-
-		insertStmt.Exec(activity.Name, fmt.Sprintf("%s %s", activity.Athlete.FirstName, activity.Athlete.LastName), activity.Distance)
+		insertStmt, err := obj.db.Prepare(fmt.Sprintf("INSERT %s SET activityName=?,rider=?,distance=?", sqlName(tableName)))
 
 		if err != nil {
 			panic(err.Error())
 		}
-	}
+
+		for a := range *activities {
+
+			activity := (*activities)[a]
+
+			insertStmt.Exec(activity.Name, fmt.Sprintf("%s %s", activity.Athlete.FirstName, activity.Athlete.LastName), activity.Distance)
+
+			if err != nil {
+				panic(err.Error())
+			}
+		}
+	*/
 }
