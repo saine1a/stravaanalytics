@@ -1,5 +1,8 @@
 package utils
 
+// Visitor : Function prototype to allow a visitor pattern
+type Visitor func(key string, item interface{})
+
 // Set : object
 type Set struct {
 	slice []interface{}
@@ -41,4 +44,11 @@ func (set *Set) Contains(item interface{}) bool {
 // Slice : returns a slice of members
 func (set *Set) Slice() []interface{} {
 	return set.slice
+}
+
+// VisitAll : visit every part of the tree and call the visitFunc on node
+func (set *Set) VisitAll(context string, visitFunc Visitor) {
+	for i := range set.slice {
+		visitFunc(context, set.slice[i])
+	}
 }

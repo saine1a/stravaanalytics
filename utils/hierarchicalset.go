@@ -60,3 +60,12 @@ func (hierarchicalSet *HierarchicalSet) GetSecondLevelSet(key string) *Set {
 		return nil
 	}
 }
+
+// VisitAll : visit every part of the tree and call the visitFunc on node
+func (hierarchicalSet *HierarchicalSet) VisitAll(visitFunc Visitor) {
+	for k := range hierarchicalSet.structure {
+		set := hierarchicalSet.GetSecondLevelSet(k)
+
+		set.VisitAll(k, visitFunc)
+	}
+}
