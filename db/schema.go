@@ -9,8 +9,8 @@ import (
 )
 
 type field struct {
-	table string
-	name  string
+	name     string
+	dataType string
 }
 
 func recursiveExplore(typ reflect.Type) *utils.HierarchicalSet {
@@ -23,7 +23,9 @@ func recursiveExplore(typ reflect.Type) *utils.HierarchicalSet {
 
 			schema.AddHierarchicalSet(subSet)
 		} else {
-			schema.Add(typ.Field(i).Tag.Get("dimension"), typ.Field(i).Name)
+			theType := typ.Field(i).Tag.Get("type")
+			theDimension := typ.Field(i).Tag.Get("dimension")
+			schema.Add(theDimension, field{name: typ.Field(i).Name, dataType: theType})
 		}
 	}
 
@@ -57,7 +59,11 @@ func (obj *DBaccess) createTable(club stravaaccess.Club, table string, fieldSet 
 			fieldExpr = fieldExpr + ","
 		}
 
-		fieldExpr = fieldExpr + fmt.Sprintf("`%s` VARCHAR(256)", fields[f].(string))
+		fieldType := fields[f].(field).dataType
+		if fieldType == "" {
+			fieldType = "VARCHAR(256)"
+		}
+		fieldExpr = fieldExpr + fmt.Sprintf("`%s` %s", fields[f].(field).name, fieldType)
 	}
 
 	// Now create the table

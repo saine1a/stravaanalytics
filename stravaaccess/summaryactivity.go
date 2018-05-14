@@ -10,6 +10,6 @@ type MetaAthlete struct {
 type SummaryActivity struct {
 	ID       int64       `json:"id" dimension:"fact"`
 	Name     string      `json:"name" dimension:"fact"`
-	Distance float32     `json:"distance" dimension:"fact"`
+	Distance float32     `json:"distance" dimension:"fact" type:"SMALLINT"`
 	Athlete  MetaAthlete `json:"athlete"`
 }
